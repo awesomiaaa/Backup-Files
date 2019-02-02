@@ -1,0 +1,2 @@
+model_checkpoint_path: "/home/deguzman/Desktop/backup4/restapi/ml/algorithm/plants-disease-convnet"
+all_model_checkpoint_paths: "/home/deguzman/Desktop/backup4/restapi/ml/algorithm/plants-disease-convnet"

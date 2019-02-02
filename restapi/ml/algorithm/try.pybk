@@ -1,0 +1,164 @@
+import cv2
+import numpy as np
+import os         
+from random import shuffle 
+from tqdm import tqdm      
+import tensorflow as tf
+import matplotlib.pyplot as plt
+import tflearn
+from tflearn.layers.conv import conv_2d, max_pool_2d
+from tflearn.layers.core import input_data, dropout, fully_connected
+from tflearn.layers.estimator import regression
+
+verify_dir = 'testpictures'
+IMG_SIZE = 50
+LR = 1e-3
+
+MODEL_NAME = 'plants-disease-convnet'
+
+
+def process_verify_data():
+    verifying_data = []
+    for img in tqdm(os.listdir(verify_dir)):
+        path = os.path.join(verify_dir, img)
+        img_num = img.split('.')[0]
+        img = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
+        img = cv2.resize(img, (IMG_SIZE, IMG_SIZE))
+        verifying_data.append([np.array(img), img_num])
+    np.save('verify_data.npy', verifying_data)
+    return verifying_data
+
+verify_data = process_verify_data()
+
+tf.reset_default_graph()
+
+convnet = input_data(shape=[None, IMG_SIZE, IMG_SIZE,3],name='input')
+
+convnet = conv_2d(convnet, 32, 3, activation='relu')
+convnet = max_pool_2d(convnet, 3)
+
+convnet = conv_2d(convnet,64,3,activation='relu')
+convnet = max_pool_2d(convnet, 3)
+
+
+convnet = conv_2d(convnet, 128, 3, activation='relu')
+convnet = max_pool_2d(convnet, 3)
+
+convnet = conv_2d(convnet, 32, 3, activation='relu')
+convnet = max_pool_2d(convnet, 3)
+
+convnet = conv_2d(convnet, 64, 3, activation='relu')
+convnet = max_pool_2d(convnet, 3)
+
+
+convnet = fully_connected(convnet, 1024, activation='relu')
+convnet = dropout(convnet, 0.8)
+
+convnet = fully_connected(convnet, 4, activation='softmax')
+convnet = regression(convnet, optimizer='adam', learning_rate=LR, loss='categorical_crossentropy', name='targets')
+
+model = tflearn.DNN(convnet, tensorboard_dir='log', tensorboard_verbose=0)
+
+
+if os.path.exists('{}.meta'.format(MODEL_NAME)):
+    model.load(MODEL_NAME)
+    print('model loaded!')
+
+
+fig = plt.figure()
+
+for num, data in enumerate(verify_data):
+
+    img_num = data[1]
+    img_data = data[0]
+    print(len(img_data))
+    print(len(img_data[0]))
+    print(len(img_num))
+
+    y = fig.add_subplot(10, 10, num + 1)
+    orig = img_data
+    
+    data = img_data.reshape(IMG_SIZE, IMG_SIZE, 3)
+
+    model_out = model.predict([data])[0]
+
+    if np.argmax(model.out) == 0:
+        str_label = 'healthy'
+    elif np.argmax(model.out) == 1:
+        str_label='bacterial'
+    elif np.argmax(model.out) == 2:
+        str_label = 'viral'
+    elif np.argmax(model.out) == 3:
+        str_label = 'lateblight'
+
+    y.imshow(orig, cmap='jet')
+    plt.title(str_label)
+    y.axes.get_xaxis().set_visible(False)
+    y.axes.get_yaxix().set_visible(False)
+
+plt.show()
+
+
+
+
+
+
+
+
+
+
+##d = verify_data[0]
+##img_data, img_num =d
+##
+##print(len(img_data[0]))
+##
+##data = img_data.reshape( IMG_SIZE, IMG_SIZE, 4)
+##print(data)
+##prediction = model.predict([data])[0]
+##
+##fig = plt.figure(figsize=(6, 6))
+##ax = fig.add_subplot(111)
+##ax.imshow(img_data, cmap="gray")
+##print("cat:{}, dog:{}".format(prediction[0], prediction[1]))
+
+
+
+##fig=plt.figure(figsize=(16,12))
+
+##for num, data in enumerate(verify_data):
+##    img_num = data[1]
+##    img_data = data[0]
+
+##    y = fig.add_subplot(4,4, num+1)
+##    orig = img_data
+##    data = img_data.reshape(IMG_SIZE, IMG_SIZE, 4)
+##    model_out = model.predict([data])[0]
+##
+##    fig=plt.figure()
+##
+##    if np.argmax(model.out) == 0:
+##        str_label = 'healthy'
+##    elif np.argmax(model.out) == 1:
+##        str_label='bacterial'
+##    elif np.argmax(model.out) == 2:
+##        str_label = 'viral'
+##    elif np.argmax(model.out) == 3:
+##        str_label = 'lateblight'
+##    else:
+##        str_label='Not Plant'
+##
+##    y.imshow(orig, cmap='jet')
+##    plt.title(str_label)
+##    y.axes.get_xaxis().set_visible(False)
+##    y.axes.get_yaxix().set_visible(False)
+##
+##plt.show()
+
+
+    
+        
+
+
+
+
+

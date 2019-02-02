@@ -1,0 +1,2 @@
+model_checkpoint_path: "/home/jkevangelio/Desktop/algorithm/plants-disease-convnet"
+all_model_checkpoint_paths: "/home/jkevangelio/Desktop/algorithm/plants-disease-convnet"
